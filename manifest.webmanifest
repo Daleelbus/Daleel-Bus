@@ -1,0 +1,9 @@
+{
+  "name": "Bus Indonesia",
+  "short_name": "Bus Indonesia",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f3f6fa",
+  "theme_color": "#123d68",
+  "description": "Pemesanan dan administrasi bus"
+}

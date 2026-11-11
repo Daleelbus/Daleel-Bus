@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#123d68">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Bus Indonesia</title>
+<style>
+:root{--navy:#123d68;--blue:#1769aa;--bg:#f3f6fa;--ink:#172536;--muted:#68788a;--line:#dce4ed;--green:#18794e;--orange:#a85b00}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{background:var(--navy);color:white;padding:20px 16px 16px}header h1{font-size:23px;margin:0}header p{margin:4px 0 0;color:#d9e8f6;font-size:13px}
+main{max-width:1100px;margin:auto;padding:14px}.tabs{display:flex;gap:8px;overflow:auto;margin-bottom:14px}
+button,.tab{border:0;border-radius:10px;padding:11px 14px;font:inherit;cursor:pointer}
+.tab{background:white;color:var(--navy);white-space:nowrap;border:1px solid var(--line)}.tab.active{background:var(--navy);color:white}
+.panel{background:white;border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.stat{background:#f6f9fc;border-radius:12px;padding:13px}.stat small{display:block;color:var(--muted)}.stat strong{font-size:22px}
+h2{font-size:18px;margin:0 0 12px}.muted{color:var(--muted);font-size:13px}
+label{display:block;font-size:13px;font-weight:600;margin:10px 0 5px}input,select{width:100%;padding:11px;border:1px solid #cbd6e2;border-radius:9px;background:white;font:inherit}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.primary{background:var(--blue);color:white}.secondary{background:#eaf1f8;color:var(--navy)}.danger{background:#fff0f0;color:#a12b2b}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.actions button{font-size:13px}
+.searchrow{display:flex;gap:8px;flex-wrap:wrap}.searchrow input{flex:1;min-width:160px}
+.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:760px;font-size:13px}th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line);vertical-align:top}th{background:#f6f9fc;color:#43566b}
+.pill{display:inline-block;padding:4px 8px;border-radius:20px;background:#eef3f8;font-size:11px}.pill.wait{background:#fff2dc;color:var(--orange)}.pill.paid{background:#e3f5eb;color:var(--green)}
+.hidden{display:none!important}.notice{padding:10px 12px;background:#fff8e8;border-radius:10px;color:#79520c;font-size:13px;margin-top:10px}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:16px}
+@media(min-width:700px){.stats{grid-template-columns:repeat(4,minmax(0,1fr))}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}}
+</style>
+</head>
+<body>
+<header><h1>🚌 BUS INDONESIA</h1><p>Sistem pemesanan dan administrasi bus</p></header>
+<main>
+<div class="tabs">
+<button class="tab active" data-tab="dashboard">Ringkasan</button>
+<button class="tab" data-tab="booking">Pesan bus</button>
+<button class="tab" data-tab="data">Data perjalanan</button>
+<button class="tab" data-tab="admin">Admin & pembayaran</button>
+</div>
+<section id="dashboard" class="view">
+<div class="stats">
+<div class="stat"><small>Data dari PDF</small><strong id="sRecords">19</strong></div>
+<div class="stat"><small>Total jamaah</small><strong id="sPassengers">784</strong></div>
+<div class="stat"><small>Total bus</small><strong id="sBuses">22</strong></div>
+<div class="stat"><small>Nilai tercatat</small><strong id="sAmount">SAR 48.400</strong></div>
+</div>
+<div class="panel" style="margin-top:14px"><h2>Ringkasan aplikasi</h2>
+<p class="muted">Data awal diimpor dari PDF BUS DALEEL 9 Nov 2026. Angka pembayaran dan saldo ditampilkan sebagai data sumber, bukan hasil verifikasi transaksi.</p>
+<div class="actions"><button class="primary" onclick="switchTab('booking')">+ Buat pemesanan</button><button class="secondary" onclick="switchTab('data')">Lihat semua data</button></div>
+<div class="notice">Versi awal menyimpan data di browser HP ini. Agar pelanggan dan admin dapat melihat data yang sama melalui internet, aplikasi perlu dipasang ke hosting dan dihubungkan ke database online.</div>
+</div>
+</section>
+<section id="booking" class="view hidden">
+<div class="panel"><h2>Form pemesanan bus</h2><p class="muted">Isi data pelanggan/travel. Pemesanan baru akan masuk ke daftar admin dengan status menunggu konfirmasi.</p>
+<form id="bookingForm">
+<div class="formgrid">
+<div><label>Nama travel / pemesan</label><input name="travel" required placeholder="Contoh: Nama Travel"></div>
+<div><label>Nomor grup</label><input name="group" placeholder="Nomor grup (jika ada)"></div>
+<div><label>Tanggal kedatangan</label><input name="arrival" type="date" required></div>
+<div><label>Nomor invoice</label><input name="invoice" placeholder="Nomor invoice (opsional)"></div>
+<div><label>Jumlah jamaah</label><input name="passengers" type="number" min="1" required></div>
+<div><label>Jumlah bus</label><input name="buses" type="number" min="1" required value="1"></div>
+<div><label>Harga per bus (SAR)</label><input name="price" type="number" min="0" value="2200" required></div>
+<div><label>Catatan</label><input name="notes" placeholder="Rute tambahan / catatan"></div>
+</div>
+<div class="actions"><button class="primary" type="submit">Kirim pemesanan</button><button class="secondary" type="reset">Kosongkan</button></div>
+</form></div>
+</section>
+<section id="data" class="view hidden">
+<div class="panel"><h2>Data perjalanan</h2><div class="searchrow"><input id="search" placeholder="Cari travel, grup, invoice..."><button class="secondary" onclick="render()">Cari</button></div>
+<p class="muted" id="dataCount"></p><div class="tablewrap"><table><thead><tr><th>Tanggal MOFA</th><th>Travel</th><th>No. grup</th><th>Kedatangan</th><th>Invoice</th><th>Jamaah</th><th>Bus</th><th>Harga/bus</th><th>Jumlah</th><th>Saldo PDF</th></tr></thead><tbody id="rows"></tbody></table></div>
+<div class="actions"><button class="secondary" onclick="exportCSV()">Unduh CSV</button></div></div>
+</section>
+<section id="admin" class="view hidden">
+<div class="panel"><h2>Admin & pembayaran</h2><p class="muted">Ubah status dan catatan pembayaran setiap pemesanan. Status awal dari PDF tidak ditebak; data lama diberi label “Data PDF”.</p>
+<div class="tablewrap"><table><thead><tr><th>Travel</th><th>Kedatangan</th><th>Jamaah</th><th>Bus</th><th>Total (SAR)</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="adminRows"></tbody></table></div>
+</div>
+</section>
+<footer>Bus Indonesia • Prototipe awal berbasis data PDF</footer>
+</main>
+<script>
+const initial = [
+{mofa:"2026-11-06",travel:"FAUZI SAHARA",group:"480901387347",arrival:"7 Nov",invoice:"40",passengers:47,buses:1,price:2200,total:2200,balance:"-SAR2,200.00",status:"Data PDF"},
+{mofa:"2026-11-06",travel:"GSW MAHMUDIN",group:"480901616627",arrival:"7 Nov",invoice:"456",passengers:25,buses:1,price:2200,total:2200,balance:"-SAR4,400.00",status:"Data PDF"},
+{mofa:"2026-11-06",travel:"MAALI LUKMAN",group:"480901464626, 480901464659, 480901515180",arrival:"7 Nov",invoice:"234",passengers:79,buses:2,price:2200,total:4400,balance:"-SAR8,800.00",status:"Data PDF"},
+{mofa:"2026-11-06",travel:"MAALI 7 NOV",group:"480901515138, 480901515138",arrival:"7 Nov",invoice:"234",passengers:36,buses:1,price:2200,total:2200,balance:"-SAR11,000.00",status:"Data PDF"},
+{mofa:"2026-11-06",travel:"NABA 7 NOV",group:"480901613587",arrival:"7 Nov",invoice:"350",passengers:45,buses:1,price:2200,total:2200,balance:"-SAR13,200.00",status:"Data PDF"},
+{mofa:"2026-11-06",travel:"FITRI HARAMAIN",group:"480901615904",arrival:"7 Nov",invoice:"252",passengers:39,buses:1,price:2200,total:2200,balance:"-SAR15,400.00",status:"Data PDF"},
+{mofa:"2026-11-06",travel:"BU LIA 7 NOV",group:"480901617502",arrival:"7 Nov",invoice:"252",passengers:29,buses:1,price:2200,total:2200,balance:"-SAR17,600.00",status:"Data PDF"},
+{mofa:"2026-11-06",travel:"BU DONA",group:"480901618850, 480901627768",arrival:"9 Nov",invoice:"278",passengers:99,buses:2,price:2200,total:4400,balance:"-SAR22,000.00",status:"Data PDF"},
+{mofa:"2026-11-06",travel:"MAALI ISRA",group:"480901532168",arrival:"8 Nov",invoice:"350",passengers:40,buses:1,price:2200,total:2200,balance:"-SAR24,200.00",status:"Data PDF"},
+{mofa:"2026-11-07",travel:"MAALI MAD 9 NOV",group:"480901540032, 480901592467",arrival:"9 Nov",invoice:"350",passengers:48,buses:1,price:2200,total:2200,balance:"-SAR26,400.00",status:"Data PDF"},
+{mofa:"2026-11-07",travel:"MAALI MAK 9 NOV",group:"480901559107",arrival:"9 Nov",invoice:"350",passengers:44,buses:1,price:2200,total:2200,balance:"-SAR28,600.00",status:"Data PDF"},
+{mofa:"2026-11-07",travel:"UMMI WISATA 10 NOV",group:"480901618323",arrival:"10 Nov",invoice:"353",passengers:20,buses:1,price:2200,total:2200,balance:"-SAR30,800.00",status:"Data PDF"},
+{mofa:"2026-11-07",travel:"ELSAFA 9 NOV",group:"480901618405",arrival:"9 Nov",invoice:"385",passengers:29,buses:1,price:2200,total:2200,balance:"-SAR33,000.00",status:"Data PDF"},
+{mofa:"2026-11-08",travel:"MAALI MUSLIMIN 9 NOV",group:"480901527406",arrival:"9 Nov",invoice:"243",passengers:24,buses:1,price:2200,total:2200,balance:"-SAR35,200.00",status:"Data PDF"},
+{mofa:"2026-11-08",travel:"BSM 9 NOV",group:"480901610520, 480901615120",arrival:"9 Nov",invoice:"329",passengers:55,buses:2,price:2200,total:4400,balance:"-SAR39,600.00",status:"Data PDF"},
+{mofa:"2026-11-08",travel:"SULASTRI 9 NOV",group:"480901609422",arrival:"9 Nov",invoice:"8505",passengers:24,buses:1,price:2200,total:2200,balance:"-SAR41,800.00",status:"Data PDF"},
+{mofa:"2026-11-08",travel:"SEROJA 9 NOV",group:"480901626048",arrival:"9 Nov",invoice:"8505",passengers:35,buses:1,price:2200,total:2200,balance:"-SAR44,000.00",status:"Data PDF"},
+{mofa:"2026-11-08",travel:"ASSALAM 9 NOV",group:"480901635842",arrival:"9 Nov",invoice:"394",passengers:16,buses:1,price:2200,total:2200,balance:"-SAR46,200.00",status:"Data PDF"},
+{mofa:"2026-11-08",travel:"AR RA 9 NOV",group:"480901632578",arrival:"9 Nov",invoice:"189",passengers:50,buses:1,price:2200,total:2200,balance:"-SAR48,400.00",status:"Data PDF"}
+];
+let bookings=JSON.parse(localStorage.getItem("busIndonesiaBookings")||"null")||initial;
+const save=()=>localStorage.setItem("busIndonesiaBookings",JSON.stringify(bookings));
+const money=n=>"SAR "+Number(n||0).toLocaleString("id-ID");
+function switchTab(id){document.querySelectorAll(".view").forEach(x=>x.classList.add("hidden"));document.getElementById(id).classList.remove("hidden");document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.tab===id));render()}
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));
+function render(){
+ document.getElementById("sRecords").textContent=bookings.length;
+ document.getElementById("sPassengers").textContent=bookings.reduce((a,b)=>a+(+b.passengers||0),0).toLocaleString("id-ID");
+ document.getElementById("sBuses").textContent=bookings.reduce((a,b)=>a+(+b.buses||0),0);
+ document.getElementById("sAmount").textContent=money(bookings.reduce((a,b)=>a+(+b.total||0),0));
+ const q=(document.getElementById("search")?.value||"").toLowerCase();
+ const filtered=bookings.filter(b=>[b.travel,b.group,b.invoice,b.arrival].join(" ").toLowerCase().includes(q));
+ document.getElementById("dataCount").textContent=filtered.length+" data ditampilkan";
+ document.getElementById("rows").innerHTML=filtered.map(b=>`<tr><td>${b.mofa||"-"}</td><td>${esc(b.travel)}</td><td>${esc(b.group||"-")}</td><td>${esc(b.arrival||"-")}</td><td>${esc(b.invoice||"-")}</td><td>${b.passengers}</td><td>${b.buses}</td><td>${money(b.price)}</td><td>${money(b.total)}</td><td>${esc(b.balance||"-")}</td></tr>`).join("");
+ document.getElementById("adminRows").innerHTML=bookings.map((b,i)=>`<tr><td>${esc(b.travel)}</td><td>${esc(b.arrival||"-")}</td><td>${b.passengers}</td><td>${b.buses}</td><td>${money(b.total)}</td><td><select onchange="setStatus(${i},this.value)"><option ${b.status==="Data PDF"?"selected":""}>Data PDF</option><option ${b.status==="Menunggu konfirmasi"?"selected":""}>Menunggu konfirmasi</option><option ${b.status==="Dikonfirmasi"?"selected":""}>Dikonfirmasi</option><option ${b.status==="Dibayar"?"selected":""}>Dibayar</option><option ${b.status==="Dibatalkan"?"selected":""}>Dibatalkan</option></select><span class="pill ${b.status==="Dibayar"?"paid":"wait"}">${esc(b.status)}</span></td><td><button class="danger" onclick="removeBooking(${i})">Hapus</button></td></tr>`).join("");
+}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+document.getElementById("bookingForm").addEventListener("submit",e=>{e.preventDefault();const f=new FormData(e.target);const x=Object.fromEntries(f.entries());x.passengers=+x.passengers;x.buses=+x.buses;x.price=+x.price;x.total=x.buses*x.price;x.mofa=new Date().toISOString().slice(0,10);x.balance="Belum dicatat";x.status="Menunggu konfirmasi";bookings.push(x);save();e.target.reset();switchTab("admin");alert("Pemesanan tersimpan di perangkat ini.")});
+function setStatus(i,v){bookings[i].status=v;save();render()}
+function removeBooking(i){if(confirm("Hapus data pemesanan ini dari perangkat?")){bookings.splice(i,1);save();render()}}
+function exportCSV(){const cols=["mofa","travel","group","arrival","invoice","passengers","buses","price","total","balance","status"];const csv=[cols.join(","),...bookings.map(b=>cols.map(k=>'"'+String(b[k]??"").replace(/"/g,'""')+'"').join(","))].join("\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}));a.download="data-bus-indonesia.csv";a.click();URL.revokeObjectURL(a.href)}
+render();
+if("serviceWorker" in navigator && location.protocol.startsWith("http"))navigator.serviceWorker.register("./sw.js").catch(()=>{});
+</script>
+</body></html>
