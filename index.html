@@ -50,12 +50,14 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:16px}
 </div>
 </section>
 <section id="booking" class="view hidden">
-<div class="panel"><h2>Form pemesanan bus</h2><p class="muted">Isi data pelanggan/travel. Pemesanan baru akan masuk ke daftar admin dengan status menunggu konfirmasi.</p>
+<div class="panel"><h2>Form pemesanan bus</h2><p class="muted">Isi data pelanggan/travel. Data utama pemesanan akan dikirim ke Google Sheets untuk diperiksa admin.</p>
 <form id="bookingForm">
 <div class="formgrid">
 <div><label>Nama travel / pemesan</label><input name="travel" required placeholder="Contoh: Nama Travel"></div>
+<div><label>Nomor WhatsApp</label><input name="whatsapp" type="tel" required placeholder="Contoh: 62812xxxxxxx"></div>
+<div><label>Rute perjalanan</label><input name="route" required placeholder="Contoh: Bandara - Hotel Makkah"></div>
+<div><label>Tanggal berangkat / kedatangan</label><input name="arrival" type="date" required></div>
 <div><label>Nomor grup</label><input name="group" placeholder="Nomor grup (jika ada)"></div>
-<div><label>Tanggal kedatangan</label><input name="arrival" type="date" required></div>
 <div><label>Nomor invoice</label><input name="invoice" placeholder="Nomor invoice (opsional)"></div>
 <div><label>Jumlah jamaah</label><input name="passengers" type="number" min="1" required></div>
 <div><label>Jumlah bus</label><input name="buses" type="number" min="1" required value="1"></div>
@@ -71,7 +73,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:16px}
 <div class="actions"><button class="secondary" onclick="exportCSV()">Unduh CSV</button></div></div>
 </section>
 <section id="admin" class="view hidden">
-<div class="panel"><h2>Admin & pembayaran</h2><p class="muted">Ubah status dan catatan pembayaran setiap pemesanan. Status awal dari PDF tidak ditebak; data lama diberi label “Data PDF”.</p>
+<div class="panel"><h2>Admin & pembayaran</h2><p class="muted">Daftar dan perubahan status pada halaman ini masih tersimpan di browser perangkat ini. Data pemesanan baru juga dikirim ke Google Sheets, tetapi belum ditarik kembali ke halaman admin.</p>
 <div class="tablewrap"><table><thead><tr><th>Travel</th><th>Kedatangan</th><th>Jamaah</th><th>Bus</th><th>Total (SAR)</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="adminRows"></tbody></table></div>
 </div>
 </section>
@@ -116,7 +118,35 @@ function render(){
  document.getElementById("adminRows").innerHTML=bookings.map((b,i)=>`<tr><td>${esc(b.travel)}</td><td>${esc(b.arrival||"-")}</td><td>${b.passengers}</td><td>${b.buses}</td><td>${money(b.total)}</td><td><select onchange="setStatus(${i},this.value)"><option ${b.status==="Data PDF"?"selected":""}>Data PDF</option><option ${b.status==="Menunggu konfirmasi"?"selected":""}>Menunggu konfirmasi</option><option ${b.status==="Dikonfirmasi"?"selected":""}>Dikonfirmasi</option><option ${b.status==="Dibayar"?"selected":""}>Dibayar</option><option ${b.status==="Dibatalkan"?"selected":""}>Dibatalkan</option></select><span class="pill ${b.status==="Dibayar"?"paid":"wait"}">${esc(b.status)}</span></td><td><button class="danger" onclick="removeBooking(${i})">Hapus</button></td></tr>`).join("");
 }
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-document.getElementById("bookingForm").addEventListener("submit",e=>{e.preventDefault();const f=new FormData(e.target);const x=Object.fromEntries(f.entries());x.passengers=+x.passengers;x.buses=+x.buses;x.price=+x.price;x.total=x.buses*x.price;x.mofa=new Date().toISOString().slice(0,10);x.balance="Belum dicatat";x.status="Menunggu konfirmasi";bookings.push(x);save();e.target.reset();switchTab("admin");alert("Pemesanan tersimpan di perangkat ini.")});
+const API_URL = "https://script.google.com/macros/s/AKfycbyt9S0eBqP3_0wTBgMMVPB_Am5GjcpwQKyXD2y6sxHA6raNdBVQdGz0sUBpUp3YMom8/exec";
+document.getElementById("bookingForm").addEventListener("submit",async e=>{
+ e.preventDefault();
+ const form=e.target;
+ const f=new FormData(form);
+ const x=Object.fromEntries(f.entries());
+ x.passengers=+x.passengers;x.buses=+x.buses;x.price=+x.price;
+ x.total=x.buses*x.price;x.mofa=new Date().toISOString().slice(0,10);
+ x.balance="Belum dicatat";x.status="Menunggu konfirmasi";
+ const payload={
+  namaPemesan:x.travel,
+  whatsapp:x.whatsapp,
+  rute:x.route,
+  tanggalBerangkat:x.arrival,
+  jumlahPenumpang:x.passengers,
+  catatan:[x.notes,x.group?"Grup: "+x.group:"",x.invoice?"Invoice: "+x.invoice:"","Jumlah bus: "+x.buses,"Harga per bus: SAR "+x.price].filter(Boolean).join(" | ")
+ };
+ const submitButton=form.querySelector('button[type="submit"]');
+ submitButton.disabled=true;submitButton.textContent="Mengirim...";
+ try{
+  await fetch(API_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});
+  bookings.push(x);save();form.reset();switchTab("admin");
+  alert("Permintaan pemesanan sudah dikirim dari browser. Silakan periksa Google Sheets pada tab Pemesanan untuk memastikan data benar-benar masuk. Status admin di halaman ini masih tersimpan di perangkat ini.");
+ }catch(err){
+  alert("Pengiriman belum berhasil. Periksa koneksi internet, lalu coba kirim kembali. Jangan mengirim berulang kali sebelum memeriksa Google Sheets.");
+ }finally{
+  submitButton.disabled=false;submitButton.textContent="Kirim pemesanan";
+ }
+});
 function setStatus(i,v){bookings[i].status=v;save();render()}
 function removeBooking(i){if(confirm("Hapus data pemesanan ini dari perangkat?")){bookings.splice(i,1);save();render()}}
 function exportCSV(){const cols=["mofa","travel","group","arrival","invoice","passengers","buses","price","total","balance","status"];const csv=[cols.join(","),...bookings.map(b=>cols.map(k=>'"'+String(b[k]??"").replace(/"/g,'""')+'"').join(","))].join("\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}));a.download="data-bus-indonesia.csv";a.click();URL.revokeObjectURL(a.href)}
